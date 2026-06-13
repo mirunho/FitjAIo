@@ -3,7 +3,7 @@ import {
   getRegistrations,
   createRegistration,
   deleteRegistration,
-  ClassRegistration,
+  type ClassRegistration,
 } from "../api";
 
 const CLASS_LIMITS: Record<string, number> = {
