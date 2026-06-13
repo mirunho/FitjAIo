@@ -5,7 +5,7 @@ import {
   updateSession,
   deleteSession,
   suggestGroup,
-  GroupSession,
+  type GroupSession,
 } from "../api";
 
 const CLASS_TYPES = ["Body Shape", "Walk Core", "Pośladki i Brzuch"];

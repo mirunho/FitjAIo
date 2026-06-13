@@ -1,0 +1,30 @@
+app = "fitjaio"
+primary_region = "waw"
+
+[build]
+  [build.args]
+    NODE_VERSION = "22"
+
+[env]
+  NODE_ENV = "production"
+  PORT = "8080"
+  DB_PATH = "/data/fitjaio.db"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [http_service.concurrency]
+    type = "requests"
+    hard_limit = 100
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"
+
+[mounts]
+  source = "fitjaio_data"
+  destination = "/data"

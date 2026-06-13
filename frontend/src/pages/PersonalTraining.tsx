@@ -9,8 +9,8 @@ import {
   updatePersonalSession,
   deletePersonalSession,
   suggestPersonal,
-  Client,
-  PersonalSession,
+  type Client,
+  type PersonalSession,
 } from "../api";
 
 const MUSCLE_GROUPS = [

@@ -1,6 +1,8 @@
 import axios from "axios";
 
-const api = axios.create({ baseURL: "http://localhost:8000" });
+// In dev Vite proxies /sessions /clients /ai /health → localhost:8000
+// In prod the backend serves this file from the same origin
+const api = axios.create({ baseURL: "" });
 
 export interface GroupSession {
   id: number;
