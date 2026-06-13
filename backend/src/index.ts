@@ -7,6 +7,7 @@ import staticFiles from "@fastify/static";
 import { sessionRoutes } from "./routes/sessions";
 import { clientRoutes } from "./routes/clients";
 import { aiRoutes } from "./routes/ai";
+import { registrationRoutes } from "./routes/registrations";
 import { getDb } from "./db";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -27,6 +28,7 @@ if (!isProd) {
 await app.register(sessionRoutes);
 await app.register(clientRoutes);
 await app.register(aiRoutes);
+await app.register(registrationRoutes);
 
 app.get("/health", async () => ({ status: "ok" }));
 

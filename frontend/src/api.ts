@@ -57,6 +57,35 @@ export const updatePersonalSession = (clientId: number, sessionId: number, data:
 export const deletePersonalSession = (clientId: number, sessionId: number) =>
   api.delete(`/clients/${clientId}/sessions/${sessionId}`);
 
+// Registrations
+export interface ClassRegistration {
+  id: number;
+  class_type: string;
+  class_date: string;
+  name: string;
+  phone: string;
+  status: "registered" | "waitlist";
+  position: number;
+  created_at: string;
+}
+
+export interface RegistrationsResponse {
+  registrations: ClassRegistration[];
+  limit: number;
+}
+
+export const getRegistrations = (class_type: string, class_date: string) =>
+  api.get<RegistrationsResponse>(
+    `/registrations?class_type=${encodeURIComponent(class_type)}&class_date=${class_date}`
+  );
+export const createRegistration = (data: {
+  class_type: string;
+  class_date: string;
+  name: string;
+  phone: string;
+}) => api.post<ClassRegistration>("/registrations", data);
+export const deleteRegistration = (id: number) => api.delete(`/registrations/${id}`);
+
 // AI
 export const suggestGroup = (class_type: string, date: string) =>
   api.post<{ suggestion: string }>("/ai/suggest-group", { class_type, date });

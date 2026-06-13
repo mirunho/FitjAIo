@@ -1,9 +1,10 @@
 import { useState } from "react";
 import GroupSessions from "./pages/GroupSessions";
 import PersonalTraining from "./pages/PersonalTraining";
+import WomenRegistration from "./pages/WomenRegistration";
 import "./App.css";
 
-type Tab = "group" | "personal";
+type Tab = "group" | "personal" | "registration";
 
 export default function App() {
   const [tab, setTab] = useState<Tab>("group");
@@ -26,11 +27,19 @@ export default function App() {
             >
               Treningi personalne
             </button>
+            <button
+              className={`nav-btn${tab === "registration" ? " active" : ""}`}
+              onClick={() => setTab("registration")}
+            >
+              Zapisy
+            </button>
           </nav>
         </div>
       </header>
       <main className="main">
-        {tab === "group" ? <GroupSessions /> : <PersonalTraining />}
+        {tab === "group" && <GroupSessions />}
+        {tab === "personal" && <PersonalTraining />}
+        {tab === "registration" && <WomenRegistration />}
       </main>
     </div>
   );

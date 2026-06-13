@@ -61,6 +61,17 @@ function migrate(db: Database.Database) {
       key TEXT PRIMARY KEY,
       value TEXT
     );
+
+    CREATE TABLE IF NOT EXISTS class_registrations (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      class_type TEXT NOT NULL,
+      class_date TEXT NOT NULL,
+      name TEXT NOT NULL,
+      phone TEXT DEFAULT '',
+      status TEXT NOT NULL DEFAULT 'registered',
+      position INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT DEFAULT (datetime('now'))
+    );
   `);
 
   // Seed historical data once — tracked via _meta so it never runs twice

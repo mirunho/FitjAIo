@@ -369,3 +369,87 @@ body {
   font-size: 12px; color: var(--text2); font-style: italic;
   padding: 0 16px 12px; margin: 0;
 }
+
+/* ── Registration ── */
+.reg-week-nav { display: flex; align-items: center; gap: 12px; }
+.reg-week-label { font-size: 15px; font-weight: 600; min-width: 220px; text-align: center; }
+
+.reg-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+}
+@media (max-width: 680px) { .reg-grid { grid-template-columns: 1fr; } }
+
+.reg-day-col { display: flex; flex-direction: column; gap: 14px; }
+
+.reg-day-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px; border-radius: 10px;
+  background: var(--surface); border: 1px solid var(--border);
+}
+.reg-day-header.reg-past { opacity: 0.55; }
+.reg-day-name { font-size: 13px; font-weight: 700; color: var(--accent); letter-spacing: 0.05em; margin-right: 8px; }
+.reg-day-date { font-size: 13px; color: var(--text2); }
+.reg-past-tag {
+  font-size: 11px; padding: 2px 8px; border-radius: 10px;
+  background: var(--surface2); color: var(--text2); border: 1px solid var(--border);
+}
+
+.reg-slot {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 16px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+
+.reg-slot-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.reg-slot-info { flex: 1; }
+.reg-slot-time { font-size: 12px; color: var(--text2); margin-bottom: 2px; }
+.reg-slot-name { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+.reg-slot-trainer { font-size: 12px; color: var(--text2); }
+
+.btn-primary.btn-waitlist {
+  background: transparent; border: 1px solid var(--text2); color: var(--text2); white-space: nowrap;
+}
+.btn-primary.btn-waitlist:hover { border-color: var(--accent); color: var(--accent); background: transparent; }
+
+.reg-spots-row { display: flex; flex-direction: column; gap: 5px; }
+.reg-bar { height: 5px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+.reg-bar-fill { height: 100%; background: var(--green); border-radius: 3px; transition: width 0.3s; }
+.reg-bar-fill.reg-bar-full { background: var(--danger); }
+.reg-spots-label { font-size: 12px; color: var(--text2); }
+.reg-full-label { color: var(--danger); }
+
+.reg-people-section {
+  border-top: 1px solid var(--border); padding-top: 10px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.reg-people-title { font-size: 12px; font-weight: 600; color: var(--text2); margin-bottom: 4px; }
+.reg-waitlist-title { color: var(--ai); }
+.reg-count {
+  font-weight: 400; padding: 0 6px; margin-left: 4px;
+  background: var(--surface2); border-radius: 8px; border: 1px solid var(--border);
+}
+
+.reg-person {
+  display: flex; align-items: center; gap: 6px;
+  padding: 4px 6px; border-radius: 6px; transition: background 0.12s;
+}
+.reg-person:hover { background: var(--surface2); }
+.reg-num { font-size: 12px; color: var(--text2); min-width: 18px; }
+.reg-name { font-size: 13px; font-weight: 500; flex: 1; }
+.reg-phone { font-size: 12px; color: var(--text2); }
+.reg-del-btn {
+  background: none; border: none; cursor: pointer; color: var(--text2);
+  font-size: 11px; padding: 2px 5px; border-radius: 4px;
+  opacity: 0; transition: opacity 0.15s, color 0.15s, background 0.15s;
+}
+.reg-person:hover .reg-del-btn { opacity: 1; }
+.reg-del-btn:hover { color: var(--danger); background: rgba(224,85,85,0.1); }
+
+.reg-waitlist-section .reg-person .reg-name { color: var(--text2); }
+
+.reg-modal-sub { font-size: 13px; font-weight: 400; color: var(--text2); margin-top: 4px; }
+.reg-error { font-size: 13px; color: var(--danger); margin-bottom: 8px; }
+.reg-success {
+  text-align: center; padding: 28px 16px;
+  font-size: 17px; font-weight: 600; color: var(--green);
+}
