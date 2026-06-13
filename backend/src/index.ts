@@ -15,7 +15,7 @@ const isProd = process.env.NODE_ENV === "production";
 // Initialise DB + run migrations + seed history (all in getDb on first call)
 getDb();
 
-const app = Fastify({ logger: isProd ? false : true });
+const app = Fastify({ logger: isProd ? false : true, ignoreTrailingSlash: true });
 
 // CORS only needed in dev (in prod, frontend is served from same origin)
 if (!isProd) {
