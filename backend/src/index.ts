@@ -7,16 +7,13 @@ import staticFiles from "@fastify/static";
 import { sessionRoutes } from "./routes/sessions";
 import { clientRoutes } from "./routes/clients";
 import { aiRoutes } from "./routes/ai";
-import { seedIfEmpty } from "./seed";
+import { getDb } from "./db";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-// In prod deployments (Railway/Fly/Docker) NODE_ENV=production is set externally.
-// Locally the dev script sets nothing, so we check if we're running both modes:
-// - "npm run dev" → no static serving, CORS enabled
-// - "npm start" in deployment → static serving, no CORS needed
 const isProd = process.env.NODE_ENV === "production";
 
-seedIfEmpty();
+// Initialise DB + run migrations + seed history (all in getDb on first call)
+getDb();
 
 const app = Fastify({ logger: isProd ? false : true });
 
