@@ -18,6 +18,5 @@ ENV PORT=8080
 ENV DB_PATH=/data/fitjaio.db
 
 EXPOSE 8080
-VOLUME ["/data"]
 
 CMD ["node", "--import", "tsx/esm", "src/index.ts"]
