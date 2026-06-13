@@ -236,3 +236,136 @@ body {
 .ai-context-input:focus { border-color: var(--ai); }
 
 .empty { color: var(--text2); font-size: 13px; padding: 12px 0; }
+
+/* View toggle */
+.header-right { display: flex; align-items: center; gap: 12px; }
+.view-toggle { display: flex; background: var(--surface2); border-radius: 8px; padding: 3px; gap: 2px; }
+.toggle-btn {
+  padding: 5px 14px; border-radius: 6px; border: none;
+  background: transparent; color: var(--text2); cursor: pointer;
+  font-size: 13px; font-weight: 500; transition: all 0.15s;
+}
+.toggle-btn:hover { color: var(--text); }
+.toggle-btn.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+
+/* ── Calendar ── */
+.calendar-wrap { margin-top: 8px; }
+.cal-nav {
+  display: flex; align-items: center; gap: 16px; margin-bottom: 16px;
+}
+.cal-title { font-size: 18px; font-weight: 600; min-width: 200px; text-align: center; }
+.cal-nav-btn {
+  width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border);
+  background: var(--surface2); color: var(--text); cursor: pointer; font-size: 18px;
+  display: flex; align-items: center; justify-content: center; transition: all 0.15s;
+}
+.cal-nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+.cal-legend {
+  display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 12px;
+  padding: 8px 12px; background: var(--surface); border-radius: 8px;
+  border: 1px solid var(--border);
+}
+.cal-legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text2); }
+.cal-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.cal-regular-badge {
+  padding: 1px 7px; border-radius: 4px; font-size: 11px; font-weight: 600;
+  background: rgba(124,108,250,0.12); color: var(--accent); border: 1px solid rgba(124,108,250,0.25);
+}
+
+.cal-grid {
+  display: grid; grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+}
+.cal-header-cell {
+  text-align: center; font-size: 12px; font-weight: 600; color: var(--text2);
+  padding: 6px 0; border-bottom: 1px solid var(--border);
+}
+.cal-cell {
+  min-height: 80px; padding: 6px; border-radius: 8px;
+  background: var(--surface); border: 1px solid var(--border);
+  cursor: pointer; transition: border-color 0.12s; position: relative;
+}
+.cal-cell:hover { border-color: var(--accent); }
+.cal-cell.empty { background: transparent; border-color: transparent; cursor: default; }
+.cal-cell.today { border-color: var(--accent); background: rgba(124,108,250,0.07); }
+.cal-cell.regular { background: rgba(124,108,250,0.04); }
+.cal-cell.regular .cal-day-num::after {
+  content: "·"; color: var(--accent); margin-left: 3px; font-size: 14px; line-height: 1;
+}
+.cal-day-num {
+  font-size: 12px; font-weight: 600; color: var(--text2);
+  display: block; margin-bottom: 4px;
+}
+.cal-cell.today .cal-day-num { color: var(--accent); }
+.cal-pills { display: flex; flex-direction: column; gap: 3px; }
+.cal-pill {
+  font-size: 10px; font-weight: 600; padding: 2px 5px;
+  border-radius: 4px; border: 1px solid; cursor: pointer;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  transition: opacity 0.1s;
+}
+.cal-pill:hover { opacity: 0.75; }
+
+/* Type count badge in list view */
+.type-count {
+  font-size: 12px; font-weight: 400; color: var(--text2);
+  margin-left: 8px; padding: 1px 8px; border-radius: 10px;
+  background: var(--surface2); border: 1px solid var(--border);
+}
+
+/* ── History ── */
+.history-wrap { margin-top: 4px; }
+
+.stats-row {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 28px;
+}
+.stat-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-left-width: 3px; border-radius: 10px; padding: 14px 16px;
+  display: flex; flex-direction: column; gap: 3px;
+}
+.stat-abbr { font-size: 22px; font-weight: 700; line-height: 1; }
+.stat-name { font-size: 12px; color: var(--text2); }
+.stat-count { font-size: 15px; font-weight: 600; margin-top: 4px; }
+.stat-avg { font-size: 12px; color: var(--text2); }
+
+.history-month { margin-bottom: 28px; }
+.history-month-title {
+  font-size: 13px; font-weight: 700; color: var(--text2); text-transform: uppercase;
+  letter-spacing: 0.08em; margin-bottom: 10px;
+  border-bottom: 1px solid var(--border); padding-bottom: 6px;
+}
+.history-entries { display: flex; flex-direction: column; gap: 6px; }
+
+.history-entry {
+  background: var(--surface); border: 1px solid var(--border);
+  border-left-width: 3px; border-radius: 10px; overflow: hidden;
+  transition: border-color 0.12s;
+}
+.history-entry:hover { border-color: var(--border); }
+.history-entry-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; cursor: pointer; gap: 12px;
+}
+.history-entry-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.history-entry-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.history-date { font-weight: 600; font-size: 14px; }
+.history-time { font-size: 13px; color: var(--text2); }
+.history-type-badge {
+  font-size: 12px; font-weight: 600; padding: 2px 10px;
+  border-radius: 12px;
+}
+.history-part { font-size: 12px; color: var(--text2); }
+.expand-icon { font-size: 10px; color: var(--text2); margin-left: 4px; }
+
+.history-exercises {
+  white-space: pre-wrap; font-family: inherit; font-size: 13px;
+  line-height: 1.7; color: var(--text2);
+  padding: 0 16px 14px; margin: 0;
+  border-top: 1px solid var(--border);
+}
+.history-notes {
+  font-size: 12px; color: var(--text2); font-style: italic;
+  padding: 0 16px 12px; margin: 0;
+}
