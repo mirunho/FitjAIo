@@ -1,9 +1,13 @@
 import Database from "better-sqlite3";
 import path from "path";
+import fs from "fs";
 import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DB_PATH = process.env.DB_PATH || path.join(__dirname, "..", "fitjaio.db");
+
+// Ensure the directory exists (needed when DB_PATH=/data/fitjaio.db and /data is a Railway volume)
+fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
 
 let _db: Database.Database | null = null;
 
