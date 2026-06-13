@@ -13,7 +13,10 @@ export default function App() {
     <div className="app">
       <header className="header">
         <div className="header-inner">
-          <h1 className="logo">FitjAIo</h1>
+          <div className="logo-wrap">
+            <h1 className="logo">FitjAIo</h1>
+            <span className="logo-sub">klub sportowy dla kobiet</span>
+          </div>
           <nav className="nav">
             <button
               className={`nav-btn${tab === "group" ? " active" : ""}`}

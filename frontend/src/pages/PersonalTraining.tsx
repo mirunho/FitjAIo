@@ -165,6 +165,9 @@ export default function PersonalTraining() {
               className={`client-item${selected?.id === c.id ? " active" : ""}`}
               onClick={() => setSelected(c)}
             >
+              <span className="client-avatar">
+                {c.name.trim().split(/\s+/).map((w: string) => w[0]).slice(0,2).join("").toUpperCase()}
+              </span>
               <span className="client-name">{c.name}</span>
               <div className="client-actions">
                 <button className="btn-icon" onClick={(e) => { e.stopPropagation(); openEditClient(c); }}>✏️</button>
