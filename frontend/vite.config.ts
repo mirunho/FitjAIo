@@ -9,7 +9,8 @@ export default defineConfig({
       '/clients':       'http://localhost:8000',
       '/ai':            'http://localhost:8000',
       '/health':        'http://localhost:8000',
-      '/registrations': 'http://localhost:8000',
+      '/registrations':     'http://localhost:8000',
+      '/cancelled-classes': 'http://localhost:8000',
     },
   },
 })

@@ -8,6 +8,7 @@ import { sessionRoutes } from "./routes/sessions";
 import { clientRoutes } from "./routes/clients";
 import { aiRoutes } from "./routes/ai";
 import { registrationRoutes } from "./routes/registrations";
+import { cancelledClassesRoutes } from "./routes/cancelled-classes";
 import { getDb } from "./db";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -29,6 +30,7 @@ await app.register(sessionRoutes);
 await app.register(clientRoutes);
 await app.register(aiRoutes);
 await app.register(registrationRoutes);
+await app.register(cancelledClassesRoutes);
 
 app.get("/health", async () => ({ status: "ok" }));
 

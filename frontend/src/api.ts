@@ -97,6 +97,18 @@ export const clearRegistrations = (class_type: string, class_date: string) =>
   api.delete(`/registrations/clear?class_type=${encodeURIComponent(class_type)}&class_date=${class_date}`);
 export const deleteRegistration = (id: number) => api.delete(`/registrations/${id}`);
 
+// Cancelled classes
+export interface CancelledClass {
+  class_type: string;
+  class_date: string;
+}
+export const getCancelledClasses = (date_from: string, date_to: string) =>
+  api.get<CancelledClass[]>(`/cancelled-classes?date_from=${date_from}&date_to=${date_to}`);
+export const cancelClass = (class_type: string, class_date: string) =>
+  api.post("/cancelled-classes", { class_type, class_date });
+export const restoreClass = (class_type: string, class_date: string) =>
+  api.delete(`/cancelled-classes?class_type=${encodeURIComponent(class_type)}&class_date=${class_date}`);
+
 // AI
 export const suggestGroup = (class_type: string, date: string) =>
   api.post<{ suggestion: string }>("/ai/suggest-group", { class_type, date });

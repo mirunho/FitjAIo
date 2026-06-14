@@ -6,31 +6,59 @@ import {
   deleteSession,
   suggestGroup,
   getRegSummary,
+  getCancelledClasses,
+  cancelClass,
+  restoreClass,
+  clearRegistrations,
   type GroupSession,
   type RegSummaryItem,
 } from "../api";
 
-const CLASS_TYPES = ["Body Shape", "Walk Core", "Pośladki i Brzuch"];
+// ── Women's schedule (shared source of truth) ──────────────────────
+interface ScheduleSlot { time: string; classType: string; }
+interface ScheduleDay { jsDay: number; slots: ScheduleSlot[]; }
+
+const WOMEN_SCHEDULE: ScheduleDay[] = [
+  {
+    jsDay: 2, // Tuesday
+    slots: [
+      { time: "17:50", classType: "Body Shape" },
+      { time: "19:00", classType: "Trening Obwodowy" },
+    ],
+  },
+  {
+    jsDay: 4, // Thursday
+    slots: [
+      { time: "17:50", classType: "Pośladki i Brzuch" },
+      { time: "19:00", classType: "WalkCore" },
+    ],
+  },
+];
+const SCHEDULE_DAYS = new Set(WOMEN_SCHEDULE.map(d => d.jsDay));
+
+const ALL_CLASS_TYPES = [
+  "Body Shape", "Trening Obwodowy", "Pośladki i Brzuch", "WalkCore",
+  "Walk Core",
+];
 
 const TYPE_META: Record<string, { abbr: string; color: string; bg: string }> = {
   "Body Shape":        { abbr: "BS",  color: "#a78bfa", bg: "rgba(167,139,250,0.15)" },
-  "Walk Core":         { abbr: "WC",  color: "#34d399", bg: "rgba(52,211,153,0.15)"  },
+  "Trening Obwodowy":  { abbr: "TO",  color: "#fb923c", bg: "rgba(251,146,60,0.15)"  },
   "Pośladki i Brzuch": { abbr: "PiB", color: "#f472b6", bg: "rgba(244,114,182,0.15)" },
+  "WalkCore":          { abbr: "WC",  color: "#34d399", bg: "rgba(52,211,153,0.15)"  },
+  "Walk Core":         { abbr: "WC",  color: "#34d399", bg: "rgba(52,211,153,0.15)"  },
 };
 
 const DAYS_PL = ["Pn", "Wt", "Śr", "Cz", "Pt", "So", "Nd"];
 const MONTHS_PL = ["Styczeń","Luty","Marzec","Kwiecień","Maj","Czerwiec",
                    "Lipiec","Sierpień","Wrzesień","Październik","Listopad","Grudzień"];
 
-// Tuesdays=2, Thursdays=4, Saturdays=6 (JS: 0=Sun)
-const REGULAR_DAYS = new Set([2, 4, 6]);
-
 type View = "calendar" | "history" | "list";
 
-const empty = (date?: string): Partial<GroupSession> => ({
+const empty = (date?: string, classType?: string, time?: string): Partial<GroupSession> => ({
   date: date ?? new Date().toISOString().slice(0, 10),
-  time: "10:00",
-  class_type: "Body Shape",
+  time: time ?? "10:00",
+  class_type: classType ?? "Body Shape",
   exercises: "",
   notes: "",
   participants: 0,
@@ -40,6 +68,8 @@ function fmt(date: string) {
   const [y, m, d] = date.split("-");
   return `${d}.${m}.${y}`;
 }
+
+function pad2(n: number) { return String(n).padStart(2, "0"); }
 
 export default function GroupSessions() {
   const [sessions, setSessions] = useState<GroupSession[]>([]);
@@ -55,17 +85,18 @@ export default function GroupSessions() {
   const [saving, setSaving] = useState(false);
   const [expanded, setExpanded] = useState<number | null>(null);
   const [regSummary, setRegSummary] = useState<Record<string, RegSummaryItem>>({});
+  const [cancelledSet, setCancelledSet] = useState<Set<string>>(new Set());
 
   const load = () => getSessions().then((r) => setSessions(r.data));
   useEffect(() => { load(); }, []);
 
-  // Load registration counts for the visible calendar month
+  // Load registration counts + cancellations for the visible calendar month
   useEffect(() => {
     if (view !== "calendar") return;
     const { year, month } = calMonth;
-    const pad = (n: number) => String(n).padStart(2, "0");
-    const dateFrom = `${year}-${pad(month + 1)}-01`;
-    const dateTo   = `${year}-${pad(month + 1)}-${new Date(year, month + 1, 0).getDate()}`;
+    const dateFrom = `${year}-${pad2(month + 1)}-01`;
+    const dateTo   = `${year}-${pad2(month + 1)}-${new Date(year, month + 1, 0).getDate()}`;
+
     getRegSummary(dateFrom, dateTo)
       .then((r) => {
         const map: Record<string, RegSummaryItem> = {};
@@ -73,11 +104,17 @@ export default function GroupSessions() {
         setRegSummary(map);
       })
       .catch(() => {});
+
+    getCancelledClasses(dateFrom, dateTo)
+      .then((r) => {
+        setCancelledSet(new Set(r.data.map(c => `${c.class_type}::${c.class_date}`)));
+      })
+      .catch(() => {});
   }, [view, calMonth]);
 
-  const openNew = (date?: string) => {
+  const openNew = (date?: string, classType?: string, time?: string) => {
     setEditing(null);
-    setForm(empty(date));
+    setForm(empty(date, classType, time));
     setAiSuggestion("");
     setShowForm(true);
   };
@@ -104,6 +141,27 @@ export default function GroupSessions() {
     await load();
   };
 
+  const handleCancelSlot = async (classType: string, dateStr: string) => {
+    if (!confirm(`Odwołać "${classType}" (${dateStr})?\nZapisy zostaną usunięte.`)) return;
+    await cancelClass(classType, dateStr);
+    setCancelledSet(prev => new Set(prev).add(`${classType}::${dateStr}`));
+    // Also remove any linked DB session
+    const linked = sessions.find(s => s.class_type === classType && s.date === dateStr);
+    if (linked) {
+      await deleteSession(linked.id);
+      await load();
+    }
+  };
+
+  const handleRestoreSlot = async (classType: string, dateStr: string) => {
+    await restoreClass(classType, dateStr);
+    setCancelledSet(prev => {
+      const next = new Set(prev);
+      next.delete(`${classType}::${dateStr}`);
+      return next;
+    });
+  };
+
   const getAi = async () => {
     if (!form.class_type || !form.date) return;
     setAiLoading(true); setAiSuggestion("");
@@ -122,20 +180,25 @@ export default function GroupSessions() {
   function calDays() {
     const { year, month } = calMonth;
     const first = new Date(year, month, 1);
-    // Monday-based: 0=Mon … 6=Sun
     const startOffset = (first.getDay() + 6) % 7;
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const cells: Array<{ date: string | null; day: number | null; jsDay: number }> = [];
     for (let i = 0; i < startOffset; i++) cells.push({ date: null, day: null, jsDay: -1 });
     for (let d = 1; d <= daysInMonth; d++) {
       const dt = new Date(year, month, d);
-      const iso = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+      const iso = `${year}-${pad2(month + 1)}-${pad2(d)}`;
       cells.push({ date: iso, day: d, jsDay: dt.getDay() });
     }
     return cells;
   }
 
   const todayIso = new Date().toISOString().slice(0, 10);
+
+  // Find which schedule slots this jsDay has
+  function getScheduleSlots(jsDay: number): ScheduleSlot[] {
+    const day = WOMEN_SCHEDULE.find(d => d.jsDay === jsDay);
+    return day?.slots ?? [];
+  }
 
   // ── History helpers ───────────────────────────────────────────────
   const sorted = [...sessions].sort((a, b) => b.date.localeCompare(a.date));
@@ -144,7 +207,7 @@ export default function GroupSessions() {
     const key = s.date.slice(0, 7);
     (byMonth[key] ??= []).push(s);
   }
-  const stats = CLASS_TYPES.map((t) => ({
+  const stats = ALL_CLASS_TYPES.filter(t => sessions.some(s => s.class_type === t)).map((t) => ({
     type: t,
     count: sessions.filter((s) => s.class_type === t).length,
     avgPart: Math.round(
@@ -183,15 +246,12 @@ export default function GroupSessions() {
           </div>
 
           <div className="cal-legend">
-            {CLASS_TYPES.map((t) => (
+            {Object.entries(TYPE_META).filter(([k]) => k !== "Walk Core").map(([t, meta]) => (
               <span key={t} className="cal-legend-item">
-                <span className="cal-dot" style={{ background: TYPE_META[t].color }} />
-                {TYPE_META[t].abbr} – {t}
+                <span className="cal-dot" style={{ background: meta.color }} />
+                {meta.abbr} – {t}
               </span>
             ))}
-            <span className="cal-legend-item">
-              <span className="cal-regular-badge">Wt/Cz/So</span> regularne dni
-            </span>
           </div>
 
           <div className="cal-grid">
@@ -200,36 +260,94 @@ export default function GroupSessions() {
               if (!cell.date) return <div key={i} className="cal-cell empty" />;
               const daySessions = sessionsByDate[cell.date] ?? [];
               const isToday = cell.date === todayIso;
-              const isRegular = REGULAR_DAYS.has(cell.jsDay);
+              const isScheduleDay = SCHEDULE_DAYS.has(cell.jsDay);
+              const scheduleSlots = getScheduleSlots(cell.jsDay);
+
+              // Collect schedule slot class_types that already have a DB session
+              const dbClassTypes = new Set(daySessions.map(s => s.class_type));
+
               return (
                 <div
                   key={i}
-                  className={`cal-cell${isToday ? " today" : ""}${isRegular ? " regular" : ""}`}
+                  className={`cal-cell${isToday ? " today" : ""}${isScheduleDay ? " regular" : ""}`}
                   onClick={() => openNew(cell.date!)}
                 >
                   <span className="cal-day-num">{cell.day}</span>
                   <div className="cal-pills">
-                    {daySessions.map((s) => {
-                      const reg = regSummary[`${s.class_type}::${s.date}`];
+                    {/* Schedule slots (women's classes) */}
+                    {scheduleSlots.map((slot) => {
+                      const meta = TYPE_META[slot.classType];
+                      const key = `${slot.classType}::${cell.date}`;
+                      const isCancelled = cancelledSet.has(key);
+                      const reg = regSummary[key];
                       const badge = reg
                         ? ` · ${reg.registered}${reg.waitlist > 0 ? `+${reg.waitlist}` : ""}`
                         : "";
+                      const linked = daySessions.find(s => s.class_type === slot.classType);
+
                       return (
                         <span
-                          key={s.id}
-                          className="cal-pill"
-                          style={{ background: TYPE_META[s.class_type]?.bg, color: TYPE_META[s.class_type]?.color, borderColor: TYPE_META[s.class_type]?.color }}
-                          onClick={(e) => { e.stopPropagation(); openEdit(s); }}
-                          title={`${s.class_type} ${s.time}${reg ? ` — ${reg.registered} zapisanych` : ""}`}
+                          key={`sched-${slot.classType}`}
+                          className={`cal-pill${isCancelled ? " cal-pill-cancelled" : ""}`}
+                          style={{
+                            background: isCancelled ? "transparent" : meta?.bg,
+                            color: isCancelled ? "var(--text3)" : meta?.color,
+                            borderColor: isCancelled ? "var(--border)" : meta?.color,
+                          }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (isCancelled) {
+                              handleRestoreSlot(slot.classType, cell.date!);
+                            } else if (linked) {
+                              openEdit(linked);
+                            } else {
+                              openNew(cell.date!, slot.classType, slot.time);
+                            }
+                          }}
+                          onContextMenu={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if (!isCancelled) handleCancelSlot(slot.classType, cell.date!);
+                          }}
+                          title={
+                            isCancelled
+                              ? `${slot.classType} — ODWOŁANE (kliknij aby przywrócić)`
+                              : `${slot.classType} ${slot.time}${reg ? ` — ${reg.registered} zapisanych` : ""}${linked ? "" : " (kliknij aby zaplanować)"}`
+                          }
                         >
-                          {TYPE_META[s.class_type]?.abbr} {s.time}{badge}
+                          {meta?.abbr}{isCancelled ? " ✕" : ""}{badge}
                         </span>
                       );
                     })}
+                    {/* Extra DB sessions not in schedule */}
+                    {daySessions
+                      .filter(s => !scheduleSlots.some(sl => sl.classType === s.class_type))
+                      .map((s) => {
+                        const meta = TYPE_META[s.class_type];
+                        const reg = regSummary[`${s.class_type}::${s.date}`];
+                        const badge = reg
+                          ? ` · ${reg.registered}${reg.waitlist > 0 ? `+${reg.waitlist}` : ""}`
+                          : "";
+                        return (
+                          <span
+                            key={s.id}
+                            className="cal-pill"
+                            style={{ background: meta?.bg ?? "rgba(124,108,250,0.15)", color: meta?.color ?? "#7c6cfa", borderColor: meta?.color ?? "#7c6cfa" }}
+                            onClick={(e) => { e.stopPropagation(); openEdit(s); }}
+                            title={`${s.class_type} ${s.time}${reg ? ` — ${reg.registered} zapisanych` : ""}`}
+                          >
+                            {meta?.abbr ?? s.class_type.slice(0, 3)} {s.time}{badge}
+                          </span>
+                        );
+                      })}
                   </div>
                 </div>
               );
             })}
+          </div>
+
+          <div className="cal-help">
+            Kliknij zajęcia aby edytować · Prawy przycisk myszy aby odwołać · Odwołane zajęcia znikają z Zapisów
           </div>
         </div>
       )}
@@ -237,11 +355,10 @@ export default function GroupSessions() {
       {/* ── HISTORY VIEW ── */}
       {view === "history" && (
         <div className="history-wrap">
-          {/* Stats */}
           <div className="stats-row">
             {stats.map((s) => (
-              <div key={s.type} className="stat-card" style={{ borderColor: TYPE_META[s.type].color }}>
-                <span className="stat-abbr" style={{ color: TYPE_META[s.type].color }}>{TYPE_META[s.type].abbr}</span>
+              <div key={s.type} className="stat-card" style={{ borderColor: TYPE_META[s.type]?.color }}>
+                <span className="stat-abbr" style={{ color: TYPE_META[s.type]?.color }}>{TYPE_META[s.type]?.abbr}</span>
                 <span className="stat-name">{s.type}</span>
                 <span className="stat-count">{s.count} treningów</span>
                 {s.avgPart > 0 && <span className="stat-avg">śr. {s.avgPart} os.</span>}
@@ -249,7 +366,6 @@ export default function GroupSessions() {
             ))}
           </div>
 
-          {/* Timeline */}
           {Object.entries(byMonth).map(([key, monthSessions]) => {
             const [y, m] = key.split("-");
             return (
@@ -295,19 +411,19 @@ export default function GroupSessions() {
       {/* ── LIST VIEW ── */}
       {view === "list" && (
         <div>
-          {CLASS_TYPES.map((type) => {
+          {ALL_CLASS_TYPES.filter(t => sessions.some(s => s.class_type === t)).map((type) => {
             const typeSessions = sessions.filter((s) => s.class_type === type);
             const meta = TYPE_META[type];
             return (
               <div key={type} className="type-section">
-                <h3 className="type-title" style={{ color: meta.color }}>
-                  {meta.abbr} · {type}
+                <h3 className="type-title" style={{ color: meta?.color }}>
+                  {meta?.abbr} · {type}
                   <span className="type-count">{typeSessions.length} treningów</span>
                 </h3>
                 {typeSessions.length === 0 && <p className="empty">Brak treningów.</p>}
                 <div className="cards">
                   {typeSessions.map((s) => (
-                    <div key={s.id} className="card" style={{ borderTopColor: meta.color, borderTopWidth: 2 }}>
+                    <div key={s.id} className="card" style={{ borderTopColor: meta?.color, borderTopWidth: 2 }}>
                       <div className="card-header">
                         <span className="card-date">{fmt(s.date)} {s.time}</span>
                         <span className="card-participants">{s.participants > 0 ? `${s.participants} os.` : ""}</span>
@@ -349,7 +465,7 @@ export default function GroupSessions() {
               <div>
                 <label>Rodzaj zajęć</label>
                 <select value={form.class_type || ""} onChange={(e) => setForm({ ...form, class_type: e.target.value })}>
-                  {CLASS_TYPES.map((t) => <option key={t}>{t}</option>)}
+                  {ALL_CLASS_TYPES.map((t) => <option key={t}>{t}</option>)}
                 </select>
               </div>
               <div>

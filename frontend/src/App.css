@@ -409,6 +409,16 @@ body {
   transition: opacity 0.12s;
 }
 .cal-pill:hover { opacity: 0.7; }
+.cal-pill-cancelled {
+  text-decoration: line-through; opacity: 0.45;
+  border-style: dashed !important;
+}
+.cal-pill-cancelled:hover { opacity: 0.7; }
+
+.cal-help {
+  margin-top: 14px; text-align: center;
+  font-size: 12px; color: var(--text2); letter-spacing: 0.01em;
+}
 
 /* ── List view badge ── */
 .type-count {

@@ -62,6 +62,14 @@ function migrate(db: Database.Database) {
       value TEXT
     );
 
+    CREATE TABLE IF NOT EXISTS cancelled_classes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      class_type TEXT NOT NULL,
+      class_date TEXT NOT NULL,
+      created_at TEXT DEFAULT (datetime('now')),
+      UNIQUE(class_type, class_date)
+    );
+
     CREATE TABLE IF NOT EXISTS class_registrations (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       class_type TEXT NOT NULL,

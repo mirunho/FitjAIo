@@ -7,6 +7,7 @@ import {
   createRegistration,
   clearRegistrations,
   deleteRegistration,
+  getCancelledClasses,
   type GroupSession,
   type ClassRegistration,
 } from "../api";
@@ -84,6 +85,7 @@ export default function WomenRegistration() {
   const [saving, setSaving]         = useState(false);
   const [regError, setRegError]     = useState("");
   const [successMsg, setSuccessMsg] = useState("");
+  const [cancelledSet, setCancelledSet] = useState<Set<string>>(new Set());
 
   const today = new Date(); today.setHours(0,0,0,0);
 
@@ -101,6 +103,12 @@ export default function WomenRegistration() {
     const allRes = await getSessions();
     const week   = allRes.data.filter(s => s.date >= ws && s.date <= we);
     setWeekSessions(week);
+
+    // Fetch cancellations for the week
+    try {
+      const cancelled = await getCancelledClasses(ws, we);
+      setCancelledSet(new Set(cancelled.data.map(c => `${c.class_type}::${c.class_date}`)));
+    } catch { setCancelledSet(new Set()); }
 
     // Load registrations for every hardcoded slot this week
     const pairs: Array<[string, string]> = [];
@@ -199,7 +207,7 @@ export default function WomenRegistration() {
                 {isPast && <span className="reg-past-tag">Minione</span>}
               </div>
 
-              {slots.map(slot => {
+              {slots.filter(slot => !cancelledSet.has(`${slot.classType}::${dateStr}`)).map(slot => {
                 const meta      = m(slot.classType);
                 const key       = `${slot.classType}::${dateStr}`;
                 const data      = regMap[key];
