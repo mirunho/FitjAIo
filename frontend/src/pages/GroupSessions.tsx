@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   getSessions,
   createSession,
@@ -55,22 +55,8 @@ export default function GroupSessions() {
   const [saving, setSaving] = useState(false);
   const [expanded, setExpanded] = useState<number | null>(null);
   const [regSummary, setRegSummary] = useState<Record<string, RegSummaryItem>>({});
-  const initialJumped = useRef(false);
 
-  const load = () => getSessions().then((r) => {
-    setSessions(r.data);
-    if (!initialJumped.current && r.data.length > 0) {
-      initialJumped.current = true;
-      const today = new Date();
-      const thisMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`;
-      const hasThisMonth = r.data.some((s) => s.date.startsWith(thisMonth));
-      if (!hasThisMonth) {
-        const latest = r.data.reduce((a, b) => a.date > b.date ? a : b);
-        const [y, m] = latest.date.split("-");
-        setCalMonth({ year: +y, month: +m - 1 });
-      }
-    }
-  });
+  const load = () => getSessions().then((r) => setSessions(r.data));
   useEffect(() => { load(); }, []);
 
   // Load registration counts for the visible calendar month
