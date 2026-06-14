@@ -9,7 +9,6 @@ import {
   getCancelledClasses,
   cancelClass,
   restoreClass,
-  clearRegistrations,
   type GroupSession,
   type RegSummaryItem,
 } from "../api";
@@ -262,9 +261,6 @@ export default function GroupSessions() {
               const isToday = cell.date === todayIso;
               const isScheduleDay = SCHEDULE_DAYS.has(cell.jsDay);
               const scheduleSlots = getScheduleSlots(cell.jsDay);
-
-              // Collect schedule slot class_types that already have a DB session
-              const dbClassTypes = new Set(daySessions.map(s => s.class_type));
 
               return (
                 <div
