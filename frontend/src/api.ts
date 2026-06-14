@@ -74,16 +74,27 @@ export interface RegistrationsResponse {
   limit: number;
 }
 
+export interface RegSummaryItem {
+  class_type: string;
+  class_date: string;
+  registered: number;
+  waitlist: number;
+}
+
 export const getRegistrations = (class_type: string, class_date: string) =>
   api.get<RegistrationsResponse>(
     `/registrations?class_type=${encodeURIComponent(class_type)}&class_date=${class_date}`
   );
+export const getRegSummary = (date_from: string, date_to: string) =>
+  api.get<RegSummaryItem[]>(`/registrations/summary?date_from=${date_from}&date_to=${date_to}`);
 export const createRegistration = (data: {
   class_type: string;
   class_date: string;
   name: string;
   phone: string;
 }) => api.post<ClassRegistration>("/registrations", data);
+export const clearRegistrations = (class_type: string, class_date: string) =>
+  api.delete(`/registrations/clear?class_type=${encodeURIComponent(class_type)}&class_date=${class_date}`);
 export const deleteRegistration = (id: number) => api.delete(`/registrations/${id}`);
 
 // AI

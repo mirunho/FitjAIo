@@ -5,7 +5,9 @@ import {
   updateSession,
   deleteSession,
   suggestGroup,
+  getRegSummary,
   type GroupSession,
+  type RegSummaryItem,
 } from "../api";
 
 const CLASS_TYPES = ["Body Shape", "Walk Core", "Pośladki i Brzuch"];
@@ -52,9 +54,26 @@ export default function GroupSessions() {
   const [aiLoading, setAiLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [expanded, setExpanded] = useState<number | null>(null);
+  const [regSummary, setRegSummary] = useState<Record<string, RegSummaryItem>>({});
 
   const load = () => getSessions().then((r) => setSessions(r.data));
   useEffect(() => { load(); }, []);
+
+  // Load registration counts for the visible calendar month
+  useEffect(() => {
+    if (view !== "calendar") return;
+    const { year, month } = calMonth;
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const dateFrom = `${year}-${pad(month + 1)}-01`;
+    const dateTo   = `${year}-${pad(month + 1)}-${new Date(year, month + 1, 0).getDate()}`;
+    getRegSummary(dateFrom, dateTo)
+      .then((r) => {
+        const map: Record<string, RegSummaryItem> = {};
+        for (const item of r.data) map[`${item.class_type}::${item.class_date}`] = item;
+        setRegSummary(map);
+      })
+      .catch(() => {});
+  }, [view, calMonth]);
 
   const openNew = (date?: string) => {
     setEditing(null);
@@ -189,17 +208,23 @@ export default function GroupSessions() {
                 >
                   <span className="cal-day-num">{cell.day}</span>
                   <div className="cal-pills">
-                    {daySessions.map((s) => (
-                      <span
-                        key={s.id}
-                        className="cal-pill"
-                        style={{ background: TYPE_META[s.class_type]?.bg, color: TYPE_META[s.class_type]?.color, borderColor: TYPE_META[s.class_type]?.color }}
-                        onClick={(e) => { e.stopPropagation(); openEdit(s); }}
-                        title={`${s.class_type} ${s.time}`}
-                      >
-                        {TYPE_META[s.class_type]?.abbr} {s.time}
-                      </span>
-                    ))}
+                    {daySessions.map((s) => {
+                      const reg = regSummary[`${s.class_type}::${s.date}`];
+                      const badge = reg
+                        ? ` · ${reg.registered}${reg.waitlist > 0 ? `+${reg.waitlist}` : ""}`
+                        : "";
+                      return (
+                        <span
+                          key={s.id}
+                          className="cal-pill"
+                          style={{ background: TYPE_META[s.class_type]?.bg, color: TYPE_META[s.class_type]?.color, borderColor: TYPE_META[s.class_type]?.color }}
+                          onClick={(e) => { e.stopPropagation(); openEdit(s); }}
+                          title={`${s.class_type} ${s.time}${reg ? ` — ${reg.registered} zapisanych` : ""}`}
+                        >
+                          {TYPE_META[s.class_type]?.abbr} {s.time}{badge}
+                        </span>
+                      );
+                    })}
                   </div>
                 </div>
               );

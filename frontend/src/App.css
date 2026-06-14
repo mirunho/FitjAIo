@@ -588,3 +588,18 @@ body {
   from { transform: scale(0.5); opacity: 0; }
   to   { transform: scale(1); opacity: 1; }
 }
+
+/* slot action row (register + edit/delete) */
+.reg-slot-actions {
+  display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0;
+}
+.reg-mgmt-btns { display: flex; gap: 5px; }
+
+/* empty state */
+.reg-empty {
+  text-align: center; padding: 72px 24px;
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+}
+.reg-empty-icon { font-size: 44px; opacity: 0.4; }
+.reg-empty-title { font-size: 16px; font-weight: 600; color: var(--text2); }
+.reg-empty-hint { font-size: 13px; color: var(--text3); max-width: 380px; line-height: 1.6; }
