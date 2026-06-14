@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   getSessions,
   createSession,
@@ -55,8 +55,22 @@ export default function GroupSessions() {
   const [saving, setSaving] = useState(false);
   const [expanded, setExpanded] = useState<number | null>(null);
   const [regSummary, setRegSummary] = useState<Record<string, RegSummaryItem>>({});
+  const initialJumped = useRef(false);
 
-  const load = () => getSessions().then((r) => setSessions(r.data));
+  const load = () => getSessions().then((r) => {
+    setSessions(r.data);
+    if (!initialJumped.current && r.data.length > 0) {
+      initialJumped.current = true;
+      const today = new Date();
+      const thisMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`;
+      const hasThisMonth = r.data.some((s) => s.date.startsWith(thisMonth));
+      if (!hasThisMonth) {
+        const latest = r.data.reduce((a, b) => a.date > b.date ? a : b);
+        const [y, m] = latest.date.split("-");
+        setCalMonth({ year: +y, month: +m - 1 });
+      }
+    }
+  });
   useEffect(() => { load(); }, []);
 
   // Load registration counts for the visible calendar month
@@ -179,6 +193,7 @@ export default function GroupSessions() {
             <span className="cal-title">{MONTHS_PL[calMonth.month]} {calMonth.year}</span>
             <button className="cal-nav-btn" onClick={() => setCalMonth(({ year, month }) =>
               month === 11 ? { year: year + 1, month: 0 } : { year, month: month + 1 })}>›</button>
+            <button className="cal-today-btn" onClick={() => { const n = new Date(); setCalMonth({ year: n.getFullYear(), month: n.getMonth() }); }}>Dzisiaj</button>
           </div>
 
           <div className="cal-legend">

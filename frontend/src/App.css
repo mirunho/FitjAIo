@@ -357,6 +357,12 @@ body {
   display: flex; align-items: center; justify-content: center; transition: all 0.15s;
 }
 .cal-nav-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
+.cal-today-btn {
+  padding: 4px 12px; border-radius: 9px; border: 1px solid var(--border);
+  background: var(--surface2); color: var(--text2); cursor: pointer; font-size: 13px;
+  font-weight: 500; transition: all 0.15s; margin-left: 4px;
+}
+.cal-today-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
 
 .cal-legend {
   display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 14px;
