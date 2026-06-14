@@ -9,6 +9,7 @@
   --text2: #9090a8;
   --accent: #7c6cfa;
   --accent-hover: #9a8cfb;
+  --accent-glow: rgba(124,108,250,0.12);
   --danger: #e05555;
   --green: #4caf85;
   --ai: #f5a623;
@@ -259,7 +260,13 @@ body {
   background: var(--surface2); color: var(--text); cursor: pointer; font-size: 18px;
   display: flex; align-items: center; justify-content: center; transition: all 0.15s;
 }
-.cal-nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+.cal-nav-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
+.cal-today-btn {
+  padding: 4px 12px; border-radius: 9px; border: 1px solid var(--border);
+  background: var(--surface2); color: var(--text2); cursor: pointer; font-size: 13px;
+  font-weight: 500; transition: all 0.15s; margin-left: 4px;
+}
+.cal-today-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
 
 .cal-legend {
   display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 12px;

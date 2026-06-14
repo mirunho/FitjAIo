@@ -1,11 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   getSessions,
   createSession,
   updateSession,
   deleteSession,
   suggestGroup,
+  getRegSummary,
   type GroupSession,
+  type RegSummaryItem,
 } from "../api";
 
 const CLASS_TYPES = ["Body Shape", "Walk Core", "Pośladki i Brzuch"];
@@ -52,9 +54,40 @@ export default function GroupSessions() {
   const [aiLoading, setAiLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [expanded, setExpanded] = useState<number | null>(null);
+  const [regSummary, setRegSummary] = useState<Record<string, RegSummaryItem>>({});
+  const initialJumped = useRef(false);
 
-  const load = () => getSessions().then((r) => setSessions(r.data));
+  const load = () => getSessions().then((r) => {
+    setSessions(r.data);
+    if (!initialJumped.current && r.data.length > 0) {
+      initialJumped.current = true;
+      const today = new Date();
+      const thisMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`;
+      const hasThisMonth = r.data.some((s) => s.date.startsWith(thisMonth));
+      if (!hasThisMonth) {
+        const latest = r.data.reduce((a, b) => a.date > b.date ? a : b);
+        const [y, m] = latest.date.split("-");
+        setCalMonth({ year: +y, month: +m - 1 });
+      }
+    }
+  });
   useEffect(() => { load(); }, []);
+
+  // Load registration counts for the visible calendar month
+  useEffect(() => {
+    if (view !== "calendar") return;
+    const { year, month } = calMonth;
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const dateFrom = `${year}-${pad(month + 1)}-01`;
+    const dateTo   = `${year}-${pad(month + 1)}-${new Date(year, month + 1, 0).getDate()}`;
+    getRegSummary(dateFrom, dateTo)
+      .then((r) => {
+        const map: Record<string, RegSummaryItem> = {};
+        for (const item of r.data) map[`${item.class_type}::${item.class_date}`] = item;
+        setRegSummary(map);
+      })
+      .catch(() => {});
+  }, [view, calMonth]);
 
   const openNew = (date?: string) => {
     setEditing(null);
@@ -160,6 +193,7 @@ export default function GroupSessions() {
             <span className="cal-title">{MONTHS_PL[calMonth.month]} {calMonth.year}</span>
             <button className="cal-nav-btn" onClick={() => setCalMonth(({ year, month }) =>
               month === 11 ? { year: year + 1, month: 0 } : { year, month: month + 1 })}>›</button>
+            <button className="cal-today-btn" onClick={() => { const n = new Date(); setCalMonth({ year: n.getFullYear(), month: n.getMonth() }); }}>Dzisiaj</button>
           </div>
 
           <div className="cal-legend">
@@ -189,17 +223,23 @@ export default function GroupSessions() {
                 >
                   <span className="cal-day-num">{cell.day}</span>
                   <div className="cal-pills">
-                    {daySessions.map((s) => (
-                      <span
-                        key={s.id}
-                        className="cal-pill"
-                        style={{ background: TYPE_META[s.class_type]?.bg, color: TYPE_META[s.class_type]?.color, borderColor: TYPE_META[s.class_type]?.color }}
-                        onClick={(e) => { e.stopPropagation(); openEdit(s); }}
-                        title={`${s.class_type} ${s.time}`}
-                      >
-                        {TYPE_META[s.class_type]?.abbr} {s.time}
-                      </span>
-                    ))}
+                    {daySessions.map((s) => {
+                      const reg = regSummary[`${s.class_type}::${s.date}`];
+                      const badge = reg
+                        ? ` · ${reg.registered}${reg.waitlist > 0 ? `+${reg.waitlist}` : ""}`
+                        : "";
+                      return (
+                        <span
+                          key={s.id}
+                          className="cal-pill"
+                          style={{ background: TYPE_META[s.class_type]?.bg, color: TYPE_META[s.class_type]?.color, borderColor: TYPE_META[s.class_type]?.color }}
+                          onClick={(e) => { e.stopPropagation(); openEdit(s); }}
+                          title={`${s.class_type} ${s.time}${reg ? ` — ${reg.registered} zapisanych` : ""}`}
+                        >
+                          {TYPE_META[s.class_type]?.abbr} {s.time}{badge}
+                        </span>
+                      );
+                    })}
                   </div>
                 </div>
               );
